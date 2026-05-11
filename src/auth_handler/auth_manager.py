@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 import googleapiclient.discovery
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -7,7 +8,6 @@ from googleapiclient.errors import HttpError
 
 class AuthManager:
     """Centralized Authentication Manager for all platforms."""
-    
     def __init__(self):
         self.youtube_client = None
         self.twitch_client = None
@@ -17,6 +17,7 @@ class AuthManager:
     
     def __read_env(self):
         """Read and initialize the environment variables"""
+        load_dotenv()  # Ensures variables from your .env file are loaded into os.environ
         self.ytb_name = os.getenv("YTB_API_SERVICE_NAME", default="youtube")
         self.ytb_version = os.getenv("YTB_API_VERSION", default="v3")
         self.ytb_scopes = os.getenv("YTB_API_SCOPES", default="").split(",")
@@ -25,6 +26,10 @@ class AuthManager:
     
     def authenticate_youtube(self):
         """Authenticate and return the YouTube API client."""
+        # Return the cached client if we've already authenticated
+        if self.youtube_client:
+            return self.youtube_client
+            
         creds = None
         if os.path.exists(self.ytb_token_fp):
             creds = Credentials.from_authorized_user_file(self.ytb_token_fp,  self.ytb_scopes)
@@ -36,7 +41,8 @@ class AuthManager:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     self.ytb_creds_fp, self.ytb_scopes
                 )
-                creds = flow.run_local_server(port=0)
+                creds = flow.run_local_server(port=0) # May subject to change once we put the whole thing to run within
+                                                      # the Docker thingie.
             # Save the credentials for the next run
             with open(self.ytb_token_fp, "w") as token:
                 token.write(creds.to_json())
