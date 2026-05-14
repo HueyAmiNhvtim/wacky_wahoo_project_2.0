@@ -1,6 +1,8 @@
 # Probably store the credential stuff into a .env file.
 # Also probably a main class to log into OAuth stuff.
 from googleapiclient.errors import HttpError
+from chat_downloader import ChatDownloader
+from chat_downloader.errors import ChatGeneratorError, InvalidURL
 from base import BaseExtractor
 from typing import List
 
@@ -8,6 +10,7 @@ from typing import List
 class YoutubeExtractor(BaseExtractor):
     def __init__(self, youtube_client):
         self.youtube_client = youtube_client
+        self._VALID_URLS_ = [f"https://www.youtube.com/watch?v="]
 
     def extract_comments(self, video_id: str) -> List[str]:
         """Extract post-stream comments."""
@@ -91,9 +94,26 @@ class YoutubeExtractor(BaseExtractor):
 
     def extract_livechat(self, video_id: str) -> List[str]:
         """Extract live chat logs."""
+        # TODO: Possibly another generator implementation like in comment thread in the future.
         result = []
         
-        
+        chat = dict()
+        chat_retrieved = False
+        for url in self._VALID_URLS_:
+            if chat_retrieved:
+                break
+            try:
+                vid_url = url + video_id
+                chat = ChatDownloader().get_chat(vid_url, message_groups=['messages'], max_attempts=10)
+                chat_retrieved = True
+            except ChatGeneratorError as err:
+                print(f"Can't find a valid generator for Youtube using this link: {url}.\nError: {err}")
+            except InvalidURL as err:
+                print(f"Invalid url: {url}.\nError: {err}")
+            
+        if chat_retrieved:
+            for message in chat:
+                result.append(message["message"])
         return result
     
     def extract_video_info(self, video_id: str) -> dict:
@@ -129,7 +149,6 @@ class YoutubeExtractor(BaseExtractor):
                 result["has_livechats"] = True
             else:
                 result["has_livechats"] = False
-
             return result
         except HttpError as err:
             print(err)
