@@ -92,28 +92,44 @@ class YoutubeExtractor(BaseExtractor):
     def extract_livechat(self, video_id: str) -> List[str]:
         """Extract live chat logs."""
         result = []
-        # TODO: The most major thing is that the majority of Youtube videos are not streams.
-        # Check to see if a video is an archived stream or not.
+        
+        
         return result
     
-
     def extract_video_info(self, video_id: str) -> dict:
         """Extract metadata like title, views, and total comment count."""
         result = dict()
-        # TODO: In the future...maybe implement a cache to avoid wasting quota on repeatedly used video.
+        # TODO: In the future...maybe implement a cache to avoid wasting quota on repeatedly reached video.
         try:
             video_request = self.youtube_client.videos().list(
                 part="snippet,statistics",
                 id=video_id
             )
             video_response = video_request.execute()
-            title = video_response["snippet"]["title"]
-            views = video_response["statistics"]["viewCount"]
-            total_comment_count = video_response["statistics"]["commentCount"]
+
+            items = video_response.get("items", [])
+            if not items:
+                print(f"No video found for ID: {video_id}") # TODO: gonna do more in the future, probably connect to frontend or sth.
+                                                            # That would also mean possibly unique Exceptions
+                return result
+                
+            video_data = items[0]
+            snippet = video_data.get("snippet", {})
+            statistics = video_data.get("statistics", {})
             
-            result["title"] = title
-            result["views"] = views
-            result["total_comment_count"] = total_comment_count
+            result["title"] = snippet.get("title", "Unknown Title")
+            result["views"] = int(statistics.get("viewCount", 0))
+            result["total_comment_count"] = int(statistics.get("commentCount", 0))
+            
+            live_broad_cast_status = snippet.get("liveBroadcastContent", "noone")
+            # TEMPORARY FIX: MAKE RESULT RETURN THE RESPONSE 
+            # TODO: Gonna require some refactoring to avoid code organization looking messy.
+            # Like, one method needing the result from another's response...
+            if live_broad_cast_status == "live" or live_broad_cast_status == "upcoming":
+                result["has_livechats"] = True
+            else:
+                result["has_livechats"] = False
+
             return result
         except HttpError as err:
             print(err)
