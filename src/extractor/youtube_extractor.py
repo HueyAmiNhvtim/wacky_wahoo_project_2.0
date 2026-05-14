@@ -95,6 +95,8 @@ class YoutubeExtractor(BaseExtractor):
     def extract_livechat(self, video_id: str) -> List[str]:
         """Extract live chat logs."""
         # TODO: Possibly another generator implementation like in comment thread in the future.
+        # TODO: Maybe test it against an actual live stream. tho...that may require us to use
+        #       Youtube's actual API for getting the livechat of an active live stream. Maybe in the future
         result = []
         
         chat = dict()
