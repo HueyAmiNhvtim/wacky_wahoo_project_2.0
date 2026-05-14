@@ -1,0 +1,9 @@
+YoutubeExtractor:
+    For commentExtractor:
+        Go to a video that you know it's not gonna receive comments anytime soon,
+        Then perform the following test:
+            Extract the first commentThread, count the number of comments extracted by instance's method
+            and makes sure it matches the actual number of comments in that thread in the youtube video.
+        
+        Test against video, and a youtube shorts link.
+        
