@@ -19,4 +19,17 @@ class BaseExtractor(ABC):
         """Extract live chat logs."""
         pass
     
+    @abstractmethod
+    def extract_everything(self, video_id: str) -> dict:
+        info = self.extract_video_info(video_id=video_id)
+        comments = self.extract_comments(video_id=video_id)
+        if info["has_livechats"]:
+            livechats = self.extract_livechat(video_id=video_id)
+            info["livechats"] = livechats
+        else:
+            info["livechats"] = []
+        info["comments"] = comments
+        return info
+        
+    
     
