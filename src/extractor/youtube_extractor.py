@@ -92,10 +92,29 @@ class YoutubeExtractor(BaseExtractor):
     def extract_livechat(self, video_id: str) -> List[str]:
         """Extract live chat logs."""
         result = []
+        # TODO: The most major thing is that the majority of Youtube videos are not streams.
+        # Check to see if a video is an archived stream or not.
         return result
     
 
     def extract_video_info(self, video_id: str) -> dict:
         """Extract metadata like title, views, and total comment count."""
         result = dict()
+        # TODO: In the future...maybe implement a cache to avoid wasting quota on repeatedly used video.
+        try:
+            video_request = self.youtube_client.videos().list(
+                part="snippet,statistics",
+                id=video_id
+            )
+            video_response = video_request.execute()
+            title = video_response["snippet"]["title"]
+            views = video_response["statistics"]["viewCount"]
+            total_comment_count = video_response["statistics"]["commentCount"]
+            
+            result["title"] = title
+            result["views"] = views
+            result["total_comment_count"] = total_comment_count
+            return result
+        except HttpError as err:
+            print(err)
         return result
