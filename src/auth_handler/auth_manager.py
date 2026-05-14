@@ -1,6 +1,9 @@
 import os
 from dotenv import load_dotenv
 import googleapiclient.discovery
+
+from google.auth.exceptions import RefreshError
+
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -33,19 +36,26 @@ class AuthManager:
         creds = None
         if os.path.exists(self.ytb_token_fp):
             creds = Credentials.from_authorized_user_file(self.ytb_token_fp,  self.ytb_scopes)
+        
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(Request())
+            except RefreshError:
+                # Possible expired refresh token.
+                if os.path.exists(self.ytb_token_fp):
+                    os.remove(self.ytb_token_fp)
+                creds = None
+
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self.ytb_creds_fp, self.ytb_scopes
-                )
-                creds = flow.run_local_server(port=0) # May subject to change once we put the whole thing to run within
-                                                      # the Docker thingie.
-            # Save the credentials for the next run
-            with open(self.ytb_token_fp, "w") as token:
-                token.write(creds.to_json())
+            flow = InstalledAppFlow.from_client_secrets_file(
+                self.ytb_creds_fp, self.ytb_scopes
+            )
+            creds = flow.run_local_server(port=0) # May subject to change once we put the whole thing to run within
+                                                  # the Docker thingie.
+        # Save the credentials for the next run
+        with open(self.ytb_token_fp, "w") as token:
+            token.write(creds.to_json())
         
         self.youtube_client  = googleapiclient.discovery.build(self.ytb_name, self.ytb_version, credentials=creds)
         return self.youtube_client
