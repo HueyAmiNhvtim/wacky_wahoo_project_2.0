@@ -4,6 +4,8 @@ Random jumbled mess thrown together (Descriptions are subject to change)
 Requirements:
 In requirements.txt.
 Forked version of chat_replay_downloader: https://github.com/Indigo128/chat-downloader
+
+requirements.txt is subject to change too!
 You are going to have to use this command upon cloning the above fork:
 
 ```Python
