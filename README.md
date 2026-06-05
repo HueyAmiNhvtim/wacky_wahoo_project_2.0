@@ -1,18 +1,22 @@
 # wacky_wahoo_project_2.0
 Random jumbled mess thrown together (Descriptions are subject to change)
 
-Requirements:
-In requirements.txt.
-Forked version of chat_replay_downloader: https://github.com/Indigo128/chat-downloader
+## Setup
+This project uses Poetry for dependency management.
+pyproject.toml is subject to change!
+Currently, no guaranteed this will work....
 
-requirements.txt is subject to change too!
-You are going to have to use this command upon cloning the above fork:
+1.  **Install Poetry:**
+    Follow the instructions on the official website.
+ 
+2.  **Install Dependencies:**
+    Navigate to the project root directory (where `pyproject.toml` is located) and run:
+    ```bash
+    $ poetry install
+    ```
+    This will create a virtual environment and install all necessary dependencies, including the forked version of `chat-downloader` from
+    https://github.com/Indigo128/chat-downloader
 
-```Python
-$ git clone https://github.com/Indigo128/chat-downloader.git
-$ cd chat-downloader
-$ python setup.py install
-```
 
 If you already have installed the OG chat-downloader from https://github.com/xenova/chat-downloader
 via pip or manually, remove the package beforehand.
