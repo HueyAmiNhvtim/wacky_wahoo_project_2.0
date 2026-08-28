@@ -1,4 +1,9 @@
 from typing import Optional
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+import os
+from dotenv import load_dotenv
 
 #TODO: Use SQLALCHEMY-CORE to connect to postgresql. 
 # Basically, create table if they do not exist or apply reflection (idk why we would need to do it) onto an existing database if 
@@ -9,42 +14,34 @@ from typing import Optional
 class DatabaseManager:
     """Handles database connection and schema initialization."""
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str, echo: bool=True):
         """
         Initializes the DatabaseManager.
         :param db_path: The file path to the SQLite database.
         """
         self.db_path = db_path
+        self.engine = create_engine(
+            url=db_path,
+            echo=True,
+            pool_size=10,
+            max_overflow=20,
+            pool_pre_ping=True,
+            pool_recycle=3600  # 
+        )
+        self.session_factory = sessionmaker(bind=self.engine)
 
-    def connect(self):
-        """Establishes a connection to the database."""
-        pass
-        # if self.conn is None:
-        #     try:
-        #         # self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        #         # # Use Row factory to access columns by name
-        #         # self.conn.row_factory = sqlite3.Row
-        #         print(f"Successfully connected to database at {self.db_path}")
-        #     except sqlite3.Error as e:
-        #         print(f"Error connecting to database: {e}")
-        #         raise
-
-    def get_connection(self):
-        """Returns the active database connection."""
-        if self.conn is None:
-            self.connect()
-        return self.conn
-
+    def get_session(self):
+        return self.session_factory()
+    
     def close(self):
         """Closes the database connection."""
-        if self.conn:
-            self.conn.close()
-            self.conn = None
-            print("Database connection closed.")
+        if self.engine:
+            self.engine.dispose()
+            print("Closing engine...")
 
     def initialize_schema(self):
         """Creates database tables if they do not exist."""
-        connection = self.get_connection()
+    
         # cursor = connection.cursor()
 
         # cursor.execute("""
