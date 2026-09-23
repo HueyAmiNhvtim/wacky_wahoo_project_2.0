@@ -1,8 +1,8 @@
 from typing import Optional
 from sqlalchemy import create_engine
 from sqlalchemy import URL
-
 from sqlalchemy.orm import sessionmaker
+from models import Base
 
 import os
 from dotenv import load_dotenv
@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 # all of them exists.
 # Probably use Alembic to handle the database creation and update and table reflection too.......
 # Think of it as a version control for your database (or Django's inhouse db migration stuff.)
+# Also, we should probably create a logger to log the stuff instead of using print statement.
 
 class DatabaseManager:
     """Handles database connection and schema initialization."""
@@ -59,16 +60,5 @@ class DatabaseManager:
         # Sth like an initial migration if there's nothing there.
         # We will auto assume that if sth is already there, then just use the tables as they are.
         # If there's error, we just log the error and shut the whole thing down. I think.
-        
-        # cursor = connection.cursor()
-
-        # cursor.execute("""
-        # CREATE TABLE IF NOT EXISTS videos (
-        #     id TEXT PRIMARY KEY,
-        #     title TEXT NOT NULL,
-        #     views INTEGER
-        # );
-        # """)
-        # connection.commit()
         Base.metadata.create_all(bind=self.engine)
         print("Database schema initialized.")
