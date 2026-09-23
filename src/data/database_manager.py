@@ -1,5 +1,7 @@
 from typing import Optional
 from sqlalchemy import create_engine
+from sqlalchemy import URL
+
 from sqlalchemy.orm import sessionmaker
 
 import os
@@ -19,9 +21,17 @@ class DatabaseManager:
         Initializes the DatabaseManager.
         :param db_path: The file path to the SQLite database.
         """
-        self.db_path = db_path
+        load_dotenv(dotenv_path=".env")
+        connection_url = URL.create(
+            drivername="postgresql+psycopg",
+            username=f"{os.getenv('DB_USERNAME')}",
+            password=f"{os.getenv('DB_PW')}",
+            host=f"{os.getenv('DB_HOST')}",
+            database=f"{os.getenv('DB_NAME')}"
+        )
+            
         self.engine = create_engine(
-            url=db_path,
+            url=connection_url,
             echo=True,
             pool_size=10,
             max_overflow=20,
@@ -40,8 +50,16 @@ class DatabaseManager:
             print("Closing engine...")
 
     def initialize_schema(self):
-        """Creates database tables if they do not exist."""
-    
+        """
+        Creates database tables if they do not exist.
+        ONLY USABLE FOR unit testing and such. For production (is it even production if this thing is just used for non-commercial purposes?)
+        use alembic (and probably poetry too )
+        """
+        #TODO: I think we should use Alembic for this.
+        # Sth like an initial migration if there's nothing there.
+        # We will auto assume that if sth is already there, then just use the tables as they are.
+        # If there's error, we just log the error and shut the whole thing down. I think.
+        
         # cursor = connection.cursor()
 
         # cursor.execute("""
@@ -52,4 +70,5 @@ class DatabaseManager:
         # );
         # """)
         # connection.commit()
+        Base.metadata.create_all(bind=self.engine)
         print("Database schema initialized.")
