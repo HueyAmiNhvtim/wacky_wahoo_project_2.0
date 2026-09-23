@@ -1,32 +1,36 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Generic, List, Optional, TypeVar
+from sqlalchemy.orm import Session
 
-#TODO: SUBJECT TO CHANGE
-class BaseRepository(ABC):
-    """Abstract base class that enforces a common interface for all repositories."""
+T = TypeVar("T")
 
-    def __init__(self, db_session: Any):
-        """Initializes the repository with a database session/connection."""
-        self.db_session = db_session
+
+class BaseRepository(ABC, Generic[T]):
+    """Abstract generic base class that enforces a common CRUD interface for all repositories."""
+
+    def __init__(self, session: Session):
+        """
+        Initializes the repository with an active database session.
+        :param session: An active SQLAlchemy Session.
+        """
+        self.session = session
 
     @abstractmethod
-    def get(self, id: Any) -> Optional[Any]:
+    def get(self, id: Any) -> Optional[T]:
         """Retrieves an entity by its primary key."""
         pass
 
     @abstractmethod
-    def save(self, data: Any) -> Any:
-        """Saves a new entity."""
+    def save(self, entity: T) -> T:
+        """Saves a new entity and flushes/persists it."""
         pass
 
     @abstractmethod
-    def delete(self, id: Any) -> None:
-        """Deletes an entity by its primary key."""
-        pass
-
-    @abstractmethod
-    def update(self, data: Any) -> Any:
+    def update(self, entity: T) -> T:
         """Updates an existing entity."""
         pass
-    
-    
+
+    @abstractmethod
+    def delete(self, id: Any) -> bool:
+        """Deletes an entity by its primary key. Returns True if found and deleted, False otherwise."""
+        pass
