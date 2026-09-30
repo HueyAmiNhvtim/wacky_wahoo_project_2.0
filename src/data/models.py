@@ -84,7 +84,3 @@ class Users(Base):
     videos: Mapped[List["Videos"]] = relationship(secondary=video_user_juction_table, back_populates="users")
 
 # Nah, we're not going to store user names for privacy sake.
-# TODO: Model the relationships too. We will also have to use junction tables to model some of the many-to-many relationships!
-# TODO: Still have to define junction tables and relationships. I think the only junction table we need is for videos and users
-#       Since youtube (and Twitch) has this thing where multiple users (or streamers) can collaborate on a single video/stream
-#       The rest is like 1-many stuff. Pretty alright. We have to finish it soon....
