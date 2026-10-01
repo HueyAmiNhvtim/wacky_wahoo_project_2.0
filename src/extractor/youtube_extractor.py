@@ -160,9 +160,9 @@ class YoutubeExtractor(BaseExtractor):
             # TODO: Gonna require some refactoring to avoid code organization looking messy.
             # Like, one method needing the result from another's response...
             if live_broad_cast_status == "live" or live_broad_cast_status == "upcoming":
-                result["has_livechats"] = True
+                result["is_livestream"] = True
             else:
-                result["has_livechats"] = False
+                result["is_livestream"] = False
             return result
         except HttpError as err:
             print(err)

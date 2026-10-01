@@ -49,16 +49,21 @@ class BaseExtractor(ABC):
         """Extract live chat logs."""
         pass
     
+    # There is still the users thing, tho I think it is the responsibility of the extractors to output that
     @abstractmethod
     def extract_everything(self, video_id: str) -> dict:
-        info = self.extract_video_info(video_id=video_id)
-        comments = self.extract_comments(video_id=video_id)
+        info = dict()
+        info["video"] = self.extract_video_info(video_id=video_id)
         if info["has_livechats"]:
             livechats = self.extract_livechat(video_id=video_id)
             info["livechats"] = livechats
         else:
             info["livechats"] = []
+        comments = self.extract_comments(video_id=video_id)
         info["comments"] = comments
+        
+        # WIP
+        info["users"] = []
         return info
         
     
