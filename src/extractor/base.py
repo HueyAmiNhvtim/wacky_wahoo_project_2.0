@@ -3,6 +3,8 @@ from typing import List
 
 # TODO: Ok, we have to agree upon the data returned by the extractors...so that we could know how to properly insert stuff
 # DATA FORMAT RETURNED BY the extractors, CHANGE IF YOU'RE GONNA MODIFY THE EXTRACTORS:
+
+# Tho, in the future....stuff like comments and livechats or users are probably gonna be generator objects instead?
 # This is based on the models.py
 # {
 #   'video': {
