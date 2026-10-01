@@ -1,6 +1,34 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+# TODO: Ok, we have to agree upon the data returned by the extractors...so that we could know how to properly insert stuff
+# DATA FORMAT RETURNED BY the extractors, CHANGE IF YOU'RE GONNA MODIFY THE EXTRACTORS:
+# This is based on the models.py
+# {
+#   'video': {
+#       platform_video_id: 
+#       title: 
+#       published_at:
+#       view_count:
+#       comment_count:
+#       is_livestream:
+#   },
+#   'comments': [{
+#       platform_comment_id: 
+#       published_at:
+#       text:
+#   }, {more_dictionary}],
+#   'livechats': [{
+#       platform_comment_id: 
+#       published_at:
+#       text: 
+#   }, {more_dictionary}],
+#   'users': {
+#       platform_video_id: []
+#   }
+# }
+
+
 class BaseExtractor(ABC):
     """Abstract base class that enforces a common interface for all platform extractors."""
     

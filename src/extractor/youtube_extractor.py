@@ -1,15 +1,17 @@
-# Probably store the credential stuff into a .env file.
-# Also probably a main class to log into OAuth stuff.
+# Probably store the credential stuff into a .env file. DatabaseManager already handles that.
+# Also probably a main class to log into OAuth stuff. I forgot why I wrote the previous comment tbh.
 from googleapiclient.errors import HttpError
 from chat_downloader import ChatDownloader
 from chat_downloader.errors import ChatGeneratorError, InvalidURL
 from base import BaseExtractor
 from typing import List
 
+# DATA FORMAT THAT IS SUPPOSEDLY RETURNED BY THIS EXTRACTOR IS SPECIFIED IN extractor/base.py
+# TODO: Modify this extractor to follow the one specified in DatabaseManager
 
 class YoutubeExtractor(BaseExtractor):
     def __init__(self, youtube_client):
-        self.youtube_client = youtube_client
+        self.youtube_client = youtube_client #
         self._VALID_URLS_ = [f"https://www.youtube.com/watch?v="]
 
     def extract_comments(self, video_id: str) -> List[str]:
@@ -30,6 +32,7 @@ class YoutubeExtractor(BaseExtractor):
                     result += self.__extract_comment_thread(comment_thread)
                     
                 next_page_token = thread_response.get("nextPageToken")
+                # Quit if no more comments in the comment section to extract.
                 if not next_page_token:
                     break
                 
@@ -46,6 +49,14 @@ class YoutubeExtractor(BaseExtractor):
         return result
 
     def __extract_comment_thread(self, commentThread: dict) -> List[str]:
+        """extract the replies under a comment thread
+
+        Args:
+            commentThread (dict): _description_
+
+        Returns:
+            List[str]: _description_
+        """
         # Part of the above comment because it's too long.
         result = []
         top_level_comment = commentThread["snippet"]["topLevelComment"]
@@ -56,13 +67,14 @@ class YoutubeExtractor(BaseExtractor):
         #             and yield the comments in batches? in the comment processing pipeline?
         #             ehh, we will get there when we get there I guess.
         result.append(top_level_comment["snippet"]["textDisplay"])
-        actual_reply_count = commentThread["snippet"]["totalReplyCount"] # only request when totalreplycount > 0 (avoid wasting quota)
+        actual_reply_count = commentThread["snippet"]["totalReplyCount"] # only request when totalreplycount > 0 (avoid wasting quota via trying to extract replies)
         
         if actual_reply_count > 0:
             retrieved_replies = commentThread.get("replies", {}).get("comments", [])
             retrieved_reply_count = len(retrieved_replies)
             
-            # Only call the quota when the retrieved replies are not enough!
+            # Only call the api when the retrieved replies are not enough!
+            # Youtube usually only serves the first few replies as an example
             if actual_reply_count != retrieved_reply_count:
                 # Loop through the replies of the current top level comment
                 replies_request = self.youtube_client.comments().list(
