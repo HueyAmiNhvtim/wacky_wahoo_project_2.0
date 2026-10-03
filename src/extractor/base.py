@@ -10,7 +10,7 @@ from typing import List
 #   'video': {
 #       platform_video_id: 
 #       title: 
-#       published_at:
+#       published_at:    datetime object
 #       view_count:
 #       comment_count:
 #       is_livestream:
@@ -18,13 +18,13 @@ from typing import List
 #   },
 #   'comments': [{
 #       platform_comment_id: 
-#       published_at:
+#       published_at:   datetime object
 #       text:  
 #       platform_user_id:
 #   }, {more_dictionary}],
 #   'livechats': [{
 #       platform_comment_id: 
-#       published_at:
+#       published_at:   datetime object
 #       text: 
 #       platform_user_id:
 #   }, {more_dictionary}],
@@ -52,6 +52,7 @@ class BaseExtractor(ABC):
         """Extract live chat logs."""
         pass
     
+    # Possible TODO: maybe make this thing multithreaded? Feels like premature optimization as of the time of writing tho. 
     # Rationale for NOT making this abstract:
     # Because we have the defined dataset format, that means extract_users can just use the data format returned by the 
     # other extract_comments stuff and pulled them all.
