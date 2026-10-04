@@ -35,7 +35,9 @@ class YoutubeExtractor(BaseExtractor):
 
             while True:
                 thread_response = thread_request.execute()
-                result += self.__extract_comment_thread(thread_response)
+                
+                for comment_thread in thread_response.get("items", []):
+                    result += self.__extract_comment_thread(comment_thread)
                     
                 next_page_token = thread_response.get("nextPageToken", False)
                 # Quit if no more comments in the comment section to extract.
@@ -159,7 +161,7 @@ class YoutubeExtractor(BaseExtractor):
                 message_dict["published_at"] = datetime.fromtimestamp(message["timestamp"]/1e6) # The chat library returns timestamp in MICROSECONDS, and python's fromtimestamp only deals with timestamp in SECONDS
                 message_dict["text"] = html.unescape(message["message"])
                 message_dict["platform_user_id"] = f"ytb_{message["author"]["id"]}"
-                result.append(message["message"])
+                result.append(message_dict)
         return result
     
     def extract_video_info(self, video_id: str) -> dict:
@@ -168,7 +170,7 @@ class YoutubeExtractor(BaseExtractor):
         # TODO: In the future...maybe implement a cache to avoid wasting quota on repeatedly reached video.
         try:
             video_request = self.youtube_client.videos().list(
-                part="snippet,statistics",
+                part="snippet,statistics,liveStreamingDetails",
                 id=video_id
             )
             video_response = video_request.execute()
@@ -198,10 +200,7 @@ class YoutubeExtractor(BaseExtractor):
             # TEMPORARY FIX: MAKE RESULT RETURN THE RESPONSE 
             # TODO: Gonna require some refactoring to avoid code organization looking messy.
             # Like, one method needing the result from another's response...
-            if live_broad_cast_status == "live" or live_broad_cast_status == "upcoming":
-                result["is_livestream"] = True
-            else:
-                result["is_livestream"] = False
+            result["is_livestream"] = "liveStreamingDetails" in video_data
             # NOTE: Youtube API (as of the time of writing of Oct 2026) does not have a way to see other collaborators' channelId in a collab video. I'm going 
             #       to follow the same data format as it is specified in base.py in case they decided to do so.
             #       Even though there is potentially a way to find collaborators channelID, it is not 100% reliable as creators
