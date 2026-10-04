@@ -6,10 +6,12 @@ from chat_downloader.errors import ChatGeneratorError, InvalidURL
 from base import BaseExtractor
 from typing import List
 
+import html
 from datetime import datetime
 
 # DATA FORMAT THAT IS SUPPOSEDLY RETURNED BY THIS EXTRACTOR IS SPECIFIED IN extractor/base.py
 # TODO: Modify this extractor to follow the data format specified in base.py
+# TODO: For each of the except in the try-except (or try-catch), get the error to a logger instead of just printing it out...
 
 # Why do I feel like you have to specify the actual video for the youtube_client....
 # No, if you look at the request_shenanigans.py, the stuff to request commentThreads and livechat messages all have the video_id parameter
@@ -33,10 +35,9 @@ class YoutubeExtractor(BaseExtractor):
 
             while True:
                 thread_response = thread_request.execute()
-                for comment_thread in thread_response.get("items", []):
-                    result += self.__extract_comment_thread(comment_thread)
+                result += self.__extract_comment_thread(thread_response)
                     
-                next_page_token = thread_response.get("nextPageToken")
+                next_page_token = thread_response.get("nextPageToken", False)
                 # Quit if no more comments in the comment section to extract.
                 if not next_page_token:
                     break
@@ -55,26 +56,30 @@ class YoutubeExtractor(BaseExtractor):
 
     # WIP: BOTH EXTRACT comments function are WIP. HAS TO FOLLOW THE data format        
     def __extract_comment_thread(self, commentThread: dict) -> List[dict]:
-        """extract the replies under a comment thread
-
-        Args:
-            commentThread (dict): _description_
-
-        Returns:
-            List[str]: _description_
+        """Extract every comment in a comment thread (well, public ones)
         """
-        # Part of the above comment because it's too long.
-        result = []
-        top_level_comment = commentThread["snippet"]["topLevelComment"]
+        
         # TODO: you know the pagination thing that Google did for their Youtube API..
         #       Maybe in the future you can try doing that to prevent returning
         #       a massive list of comments to whatever backend we're gonna do.
         #       Hint: perhaps you can return the generator instead.
         #             and yield the comments in batches? in the comment processing pipeline?
         #             ehh, we will get there when we get there I guess.
-        result.append(top_level_comment["snippet"]["textDisplay"])
-        actual_reply_count = commentThread["snippet"]["totalReplyCount"] # only request when totalreplycount > 0 (avoid wasting quota via trying to extract replies)
+        # Part of the above comment because it's too long.
+        result = []
         
+        # Get the comment at the top of the comment thread
+        top_level_comment = commentThread["snippet"]["topLevelComment"]
+        top_level_comment_snippet = top_level_comment["snippet"]
+        top_level_comment_dict = dict()
+        top_level_comment_dict["platform_comment_id"] = f"ytb_{top_level_comment["id"]}"
+        top_level_comment_dict["published_at"] = datetime.fromisoformat(top_level_comment_snippet["publishedAt"])
+        top_level_comment_dict["text"] = top_level_comment_snippet.get("textOriginal") or html.unescape(top_level_comment_snippet.get("textDisplay", ""))
+        top_level_comment_dict["platform_user_id"] = f"ytb_{top_level_comment_snippet["authorChannelId"]["value"]}"
+        result.append(top_level_comment_dict)
+        
+        actual_reply_count = commentThread["snippet"]["totalReplyCount"] 
+        # only request when totalreplycount > 0 (avoid wasting quota via trying to extract replies)
         if actual_reply_count > 0:
             retrieved_replies = commentThread.get("replies", {}).get("comments", [])
             retrieved_reply_count = len(retrieved_replies)
@@ -90,24 +95,38 @@ class YoutubeExtractor(BaseExtractor):
                 )
                 
                 while True:
-                    # TODO: of course...gonna have to wrap the execute stuff with the try-catch statement 
-                    replies_response = replies_request.execute()
-                    for reply in replies_response.get("items", []):
-                        result.append(reply["snippet"]["textDisplay"])
-                        
-                    next_page_token = replies_response.get("nextPageToken")
-                    if not next_page_token:
-                        break
-                        
-                    replies_request = self.youtube_client.comments().list(
-                        part="snippet",
-                        maxResults=100,
-                        parentId=top_level_comment["id"],
-                        pageToken=next_page_token,
-                    ) 
+                    try:
+                        replies_response = replies_request.execute()
+                        for reply in replies_response.get("items", []):
+                            reply_dict = dict()
+                            reply_snippet = reply["snippet"]
+                            reply_dict["platform_comment_id"] = f"ytb_{reply["id"]}"
+                            reply_dict["published_at"] = datetime.fromisoformat(reply_snippet["publishedAt"])
+                            reply_dict["text"] = reply_snippet.get("textOriginal") or html.unescape(reply_snippet.get("textDisplay", ""))
+                            reply_dict["platform_user_id"] = f"ytb_{reply_snippet["authorChannelId"]["value"]}"
+                            result.append(reply_dict)      
+                                            
+                        next_page_token = replies_response.get("nextPageToken")
+                        if not next_page_token:
+                            break
+                            
+                        replies_request = self.youtube_client.comments().list(
+                            part="snippet",
+                            maxResults=100,
+                            parentId=top_level_comment["id"],
+                            pageToken=next_page_token,
+                        ) 
+                    except HttpError as err:
+                        print(err)
             else:
                 for reply in retrieved_replies:
-                    result.append(reply["snippet"]["textDisplay"]) 
+                    reply_dict = dict()
+                    reply_snippet = reply["snippet"]
+                    reply_dict["platform_comment_id"] = f"ytb_{reply["id"]}"
+                    reply_dict["published_at"] = datetime.fromisoformat(reply_snippet["publishedAt"])
+                    reply_dict["text"] = reply_snippet.get("textOriginal") or html.unescape(reply_snippet.get("textDisplay", ""))
+                    reply_dict["platform_user_id"] = f"ytb_{reply_snippet["authorChannelId"]["value"]}"
+                    result.append(reply_dict) 
         return result
 
     def extract_livechat(self, video_id: str) -> List[dict]:
@@ -119,7 +138,7 @@ class YoutubeExtractor(BaseExtractor):
         #       
         result = []
         
-        chat = dict()
+        chat = None
         chat_retrieved = False
         for url in self._VALID_URLS_:
             if chat_retrieved:
@@ -134,7 +153,12 @@ class YoutubeExtractor(BaseExtractor):
                 print(f"Invalid url: {url}.\nError: {err}")
             
         if chat_retrieved:
-            for message in chat:
+            for message in chat: # ignore the error, the chat_retrieved guarantees that if chat generator can't be retrieved, it will block the code from going into this part
+                message_dict = dict()
+                message_dict["platform_comment_id"] = f"ytb_{message["message_id"]}"
+                message_dict["published_at"] = datetime.fromtimestamp(message["timestamp"]/1e6) # The chat library returns timestamp in MICROSECONDS, and python's fromtimestamp only deals with timestamp in SECONDS
+                message_dict["text"] = html.unescape(message["message"])
+                message_dict["platform_user_id"] = f"ytb_{message["author"]["id"]}"
                 result.append(message["message"])
         return result
     
