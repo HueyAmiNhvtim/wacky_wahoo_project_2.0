@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Any, Generic, List, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 from sqlalchemy.orm import Session
 
 T = TypeVar("T")
 
-
+# Basically, CRUD-style stuff.
+# CREATE, READ, UPDATE, DELETE
 class BaseRepository(ABC, Generic[T]):
     """Abstract generic base class that enforces a common CRUD interface for all repositories."""
 

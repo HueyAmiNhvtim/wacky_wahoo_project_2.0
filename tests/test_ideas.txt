@@ -6,4 +6,12 @@ YoutubeExtractor:
             and makes sure it matches the actual number of comments in that thread in the youtube video.
         
         Test against video, and a youtube shorts link.
+
+Extractors in general:
+    Test for data format returned by Youtube Extractors (and future extractors if we come to that) to make sure it agreed upon the design
+
+Database:
+    Test for connection
+    Test dummy Database
+    Test insert, update, delete, create? (Tho that's for the repo test)
         
