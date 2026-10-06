@@ -41,7 +41,7 @@ class Videos(Base):
 
 # Why separate comments and livecomments? I think it's for the fact that if we want to collect additional data specific to livechats
 # (ex: Livechats that donates money for example), we can just alter the livecomments table rather than updating the entire combined
-# table (which can be quite big)    
+# comment + livechat table (which could be quite big)    
 class Comments(Base):
     __tablename__ = "comments"
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)   
