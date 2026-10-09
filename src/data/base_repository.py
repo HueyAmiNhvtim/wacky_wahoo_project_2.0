@@ -50,6 +50,6 @@ class BaseRepository(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def delete(self, id: Any) -> bool:
-        """Deletes an entity by its primary key. Returns True if found and deleted, False otherwise."""
+    def delete(self, conditions: Dict) -> bool:
+        """Deletes an entity that matches the values specified in conditions. Returns True if found and deleted, False otherwise."""
         pass
