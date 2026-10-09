@@ -50,9 +50,9 @@ class DatabaseManager:
             self.engine.dispose()
             print("Closing engine...")
 
-    def initialize_database(self):
+    def initialize_tables(self):
         """
-        Creates database tables if they do not exist.
+        Creates database tables if they do not exist using the schema defined in the metadata of Base
         ONLY USABLE FOR unit testing and such. For production (is it even production if this thing is just used for non-commercial purposes?)
         use alembic (and probably poetry too )
         """
@@ -63,7 +63,7 @@ class DatabaseManager:
         Base.metadata.create_all(bind=self.engine)
         print("Database schema initialized.")
 
-    def delete_database(self):
+    def delete_tables(self):
         """
         Delete database tables
         SHOULD ONLY USE FOR unit testing and such.
