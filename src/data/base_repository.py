@@ -17,14 +17,13 @@ class BaseRepository(ABC, Generic[T]):
         self.session = session
 
     @abstractmethod
-    def get_by(self, n: Optional[int]=1, offset: Optional[int]=0, **kwargs) -> List[Optional[T]]:
+    def get_by(self, n: int=1, offset: int=0, **kwargs) -> List[Optional[T]]:
         """
         Retrieves the n number of records that matches the specified information with <offset> initial rows skips
         Default of n is 1. n=-1 will retrieve everything instead regardless of <offset> value
         """
-        if n == -1:
-            return self.get_by_all(**kwargs)
-    
+        pass
+        
     @abstractmethod
     def get_by_all(self, **kwargs) -> List[Optional[T]]:
         """
@@ -43,10 +42,11 @@ class BaseRepository(ABC, Generic[T]):
         """Save multiple entities and flushes/persists them into the corresponding table"""
         pass
     
-    # Update one.....WIP
     @abstractmethod
-    def update(self, values: Dict, conditions: Dict) -> T:
-        """Updates existing entities satisfying conditions with values"""
+    def update(self, values: Dict, conditions: Dict) -> int:
+        """Updates existing entities satisfying conditions with values
+           Return number of rows successfully updated
+        """
         pass
 
     @abstractmethod
