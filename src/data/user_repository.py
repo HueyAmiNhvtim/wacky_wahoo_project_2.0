@@ -33,15 +33,21 @@ class UserRepository(BaseRepository[Users]):
         stmt = select(Users).filter_by(**kwargs)
         return list(self.session.scalars(stmt).all())
     
-    def save(self, user: Users):
-        pass
+    def insert(self, entity: Users) -> Users:
+        self.session.add(entity)
+        return entity
     
-    def save_all(self, users: List[Users]) -> List[Users]:
-        pass
+    def insert_all(self, entities: List[Users]) -> List[Users]:
+        self.session.add_all(entities)
+        return entities
     
     def update(self, values: Dict, conditions: Dict) -> int:
-        pass
+        stmt = update(Users).filter_by(**conditions).values(**values)
+        result = self.session.execute(stmt)
+        return result.rowcount
     
-    def delete(self, conditions: Dict) -> bool:
-        pass
+    def delete(self, conditions: Dict) -> int:
+        stmt = delete(Users).filter_by(**conditions)
+        result = self.session.execute(stmt)
+        return result.rowcount
     
