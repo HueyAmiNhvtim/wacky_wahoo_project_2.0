@@ -53,3 +53,12 @@ class BaseRepository(ABC, Generic[T]):
     def delete(self, conditions: Dict) -> bool:
         """Deletes an entity that matches the values specified in conditions. Returns True if found and deleted, False otherwise."""
         pass
+    
+    def flush(self) -> None:
+        """
+        Sends all staged SQL operations to the databse within the current transaction.
+        Note that this does not make the data fully persist to the database, just make the current changes communicate to the sql database!
+        See https://stackoverflow.com/questions/4201455/sqlalchemy-whats-the-difference-between-flush-and-commit
+        """
+        self.session.flush()
+        
