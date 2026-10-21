@@ -1,8 +1,11 @@
 from typing import Optional
 from sqlalchemy import create_engine
 from sqlalchemy import URL
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from models import Base
+
+from contextlib import contextmanager
+from typing import Generator
 
 import os
 from dotenv import load_dotenv
@@ -41,8 +44,25 @@ class DatabaseManager:
         )
         self.session_factory = sessionmaker(bind=self.engine)
 
-    def get_session(self):
-        return self.session_factory()
+    @contextmanager
+    def session_scope(self) -> Generator[Session]: 
+        """
+        Context manager.
+        Will commit automatically if no errors happen upon end of context is reached (end of the with statement)
+        Will roll back automatically if an exception is encountered
+        Will always close the session when done. (courtesy of the with statement)
+        Yields:
+            Generator[Session]: sessions for the repositories
+        """
+        session: Session = self.session_factory()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
     
     def close(self):
         """Closes the database connection."""
