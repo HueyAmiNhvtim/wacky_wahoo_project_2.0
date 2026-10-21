@@ -33,12 +33,12 @@ class BaseRepository(ABC, Generic[T]):
     
     # Save is fine, it's just getting the info from the scraper (and future TODO: probably from cache?) and save it into the table
     @abstractmethod
-    def save(self, entity: T) -> T:
+    def insert(self, entity: T) -> T:
         """Saves a new entity and flushes/persists it into the corresponding table"""
         pass
     
     @abstractmethod
-    def save_all(self, entities: List[T]) -> List[T]:
+    def insert_all(self, entities: List[T]) -> List[T]:
         """Save multiple entities and flushes/persists them into the corresponding table"""
         pass
     
@@ -50,8 +50,8 @@ class BaseRepository(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def delete(self, conditions: Dict) -> bool:
-        """Deletes an entity that matches the values specified in conditions. Returns True if found and deleted, False otherwise."""
+    def delete(self, conditions: Dict) -> int:
+        """Deletes an entity that matches the values specified in conditions. Returns number of rows deleted."""
         pass
     
     def flush(self) -> None:
