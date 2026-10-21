@@ -1,6 +1,11 @@
 from typing import Optional
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import URL
+from sqlalchemy.orm import sessionmaker, Session
+from models import Base
+
+from contextlib import contextmanager
+from typing import Generator
 
 import os
 from dotenv import load_dotenv
@@ -10,6 +15,7 @@ from dotenv import load_dotenv
 # all of them exists.
 # Probably use Alembic to handle the database creation and update and table reflection too.......
 # Think of it as a version control for your database (or Django's inhouse db migration stuff.)
+# Also, we should probably create a logger to log the stuff instead of using print statement.
 
 class DatabaseManager:
     """Handles database connection and schema initialization."""
@@ -19,9 +25,17 @@ class DatabaseManager:
         Initializes the DatabaseManager.
         :param db_path: The file path to the SQLite database.
         """
-        self.db_path = db_path
+        load_dotenv(dotenv_path=".env")
+        connection_url = URL.create(
+            drivername="postgresql+psycopg",
+            username=f"{os.getenv('DB_USERNAME')}",
+            password=f"{os.getenv('DB_PW')}",
+            host=f"{os.getenv('DB_HOST')}",
+            database=f"{os.getenv('DB_NAME')}"
+        )
+            
         self.engine = create_engine(
-            url=db_path,
+            url=connection_url,
             echo=True,
             pool_size=10,
             max_overflow=20,
@@ -30,8 +44,25 @@ class DatabaseManager:
         )
         self.session_factory = sessionmaker(bind=self.engine)
 
-    def get_session(self):
-        return self.session_factory()
+    @contextmanager
+    def session_scope(self) -> Generator[Session]: 
+        """
+        Context manager.
+        Will commit automatically if no errors happen upon end of context is reached (end of the with statement)
+        Will roll back automatically if an exception is encountered
+        Will always close the session when done. (courtesy of the with statement)
+        Yields:
+            Generator[Session]: sessions for the repositories
+        """
+        session: Session = self.session_factory()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
     
     def close(self):
         """Closes the database connection."""
@@ -39,17 +70,22 @@ class DatabaseManager:
             self.engine.dispose()
             print("Closing engine...")
 
-    def initialize_schema(self):
-        """Creates database tables if they do not exist."""
-    
-        # cursor = connection.cursor()
-
-        # cursor.execute("""
-        # CREATE TABLE IF NOT EXISTS videos (
-        #     id TEXT PRIMARY KEY,
-        #     title TEXT NOT NULL,
-        #     views INTEGER
-        # );
-        # """)
-        # connection.commit()
+    def initialize_tables(self):
+        """
+        Creates database tables if they do not exist using the schema defined in the metadata of Base
+        ONLY USABLE FOR unit testing and such. For production (is it even production if this thing is just used for non-commercial purposes?)
+        use alembic (and probably poetry too )
+        """
+        #TODO: I think we should use Alembic for this.
+        # Sth like an initial migration if there's nothing there.
+        # We will auto assume that if sth is already there, then just use the tables as they are.
+        # If there's error, we just log the error and shut the whole thing down. I think.
+        Base.metadata.create_all(bind=self.engine)
         print("Database schema initialized.")
+
+    def delete_tables(self):
+        """
+        Delete database tables
+        SHOULD ONLY USE FOR unit testing and such.
+        """
+        Base.metadata.drop_all(bind=self.engine)
