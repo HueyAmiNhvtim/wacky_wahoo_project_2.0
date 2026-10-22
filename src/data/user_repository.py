@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from base_repository import BaseRepository
 from typing import Any, Optional, List, Dict
+from uuid import UUID as UUIDType
 
 from models import Users
 
@@ -51,3 +52,30 @@ class UserRepository(BaseRepository[Users]):
         result = self.session.execute(stmt)
         return result.rowcount
     
+    def ensure_users_exist(self, platform_user_ids: List[str]) -> Dict[str, UUIDType]:
+        """
+        Takes a list of platform user id
+        and returns a mapping of user ids associated with their internal uuid primary key in the database!
+        This function exists because when calling the platform API, they return the IDs associated with the user,
+        but in this database, each user record has its primary key of being an internal UUID!
+        Should be used upon insertion of records of tables that have foreign keys being native column of this table!
+        """
+        if not platform_user_ids:
+            return {}
+        unique_uids = list(set(platform_user_ids))
+        # Fetch existing users
+        stmt = select(Users).where(Users.platform_user_id.in_(unique_uids))
+        existing_users = list(self.session.scalars(stmt).all())
+        user_map = {u.platform_user_id: u.id for u in existing_users}
+        # Create new users that haven't appeared in the database!
+        new_users = [
+            Users(platform_user_id=uid)
+            for uid in unique_uids
+            if uid not in user_map
+        ]
+        if new_users:
+            self.session.add_all(new_users)
+            self.session.flush()  # Put the insertion of new users into the database's existing transaction!
+            for u in new_users:
+                user_map[u.platform_user_id] = u.id # By flushing, Postgre will generate the IDs for the new users, so those entries can be added to the user map. 
+        return user_map
