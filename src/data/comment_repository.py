@@ -70,7 +70,7 @@ class CommentRepository(BaseRepository):
             for c in raw_comments
             if c["platform_comment_id"] not in existing_ids
         ]
-        # 3. Batch insert the new comments
+        # Batch insert the new comments
         if new_comments:
             self.insert_all(new_comments)
         return new_comments

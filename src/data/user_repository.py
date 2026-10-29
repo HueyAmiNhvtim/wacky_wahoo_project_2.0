@@ -75,6 +75,8 @@ class UserRepository(BaseRepository[Users]):
         if new_users:
             self.session.add_all(new_users)
             self.session.flush()  # Put the insertion of new users into the database's existing transaction!
+                                  # No using commit() because in case of crashing after running this method,
+                                  # you can get a bunch of orphaned users with null foreign keys
             for u in new_users:
                 user_map[u.platform_user_id] = u.id # By flushing, Postgre will generate the IDs for the new users, so those entries can be added to the user map. 
         return user_map
