@@ -7,8 +7,6 @@ from models import Videos
 
 from sqlalchemy import select, update, delete
 
-# TODO: Finish Videos stuff
-
 
 class VideoRepository(BaseRepository[Videos]):
     def __init__(self, session: Session):
