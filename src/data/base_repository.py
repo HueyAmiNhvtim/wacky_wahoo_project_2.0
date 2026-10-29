@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generic, Optional, TypeVar, List, Dict
+from typing import Generic, TypeVar, List, Dict
 from sqlalchemy.orm import Session
 
 T = TypeVar("T")
@@ -17,7 +17,7 @@ class BaseRepository(ABC, Generic[T]):
         self.session = session
 
     @abstractmethod
-    def get_by(self, n: int=1, offset: int=0, **kwargs) -> List[Optional[T]]:
+    def get_by(self, n: int=1, offset: int=0, **kwargs) -> List[T]:
         """
         Retrieves the n number of records that matches the specified information with <offset> initial rows skips
         Default of n is 1. n=-1 will retrieve everything instead regardless of <offset> value
@@ -25,7 +25,7 @@ class BaseRepository(ABC, Generic[T]):
         pass
         
     @abstractmethod
-    def get_by_all(self, **kwargs) -> List[Optional[T]]:
+    def get_by_all(self, **kwargs) -> List[T]:
         """
         Retrieves every record that matches the specified information
         """
@@ -61,4 +61,3 @@ class BaseRepository(ABC, Generic[T]):
         See https://stackoverflow.com/questions/4201455/sqlalchemy-whats-the-difference-between-flush-and-commit
         """
         self.session.flush()
-        

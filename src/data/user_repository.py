@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session
 
 from base_repository import BaseRepository
-from typing import Any, Optional, List, Dict
+from typing import List, Dict
 from uuid import UUID as UUIDType
 
 from models import Users
 
-from sqlalchemy import select, update, insert, delete
+from sqlalchemy import select, update, delete
 
 # I don't think we need func here for aggregate functions tbh, feels like that would make the repo do too much.
 # Should be reserved for when we doing actual analytics stuff.
@@ -17,7 +17,7 @@ class UserRepository(BaseRepository[Users]):
     def __init__(self, session: Session):
         super().__init__(session)
     
-    def get_by(self, n: int=1, offset: int=0, **kwargs) -> List[Optional[Users]]:
+    def get_by(self, n: int=1, offset: int=0, **kwargs) -> List[Users]:
         if n == -1:
             return self.get_by_all(**kwargs)
         
@@ -30,7 +30,7 @@ class UserRepository(BaseRepository[Users]):
         # select(Users) basically select every single columns from Users
         return list(self.session.scalars(stmt).all())
     
-    def get_by_all(self, **kwargs) -> List[Optional[Users]]:
+    def get_by_all(self, **kwargs) -> List[Users]:
         stmt = select(Users).filter_by(**kwargs)
         return list(self.session.scalars(stmt).all())
     
@@ -58,7 +58,6 @@ class UserRepository(BaseRepository[Users]):
         and returns a mapping of user ids associated with their internal uuid primary key in the database!
         This function exists because when calling the platform API, they return the IDs associated with the user,
         but in this database, each user record has its primary key of being an internal UUID!
-        Should be used upon insertion of records of tables that have foreign keys being native column of this table!
         """
         if not platform_user_ids:
             return {}
