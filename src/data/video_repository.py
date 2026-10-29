@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from base_repository import BaseRepository
-from typing import Optional, List, Dict
+from typing import List, Dict
 
 from models import Videos
 
