@@ -20,10 +20,11 @@ from dotenv import load_dotenv
 class DatabaseManager:
     """Handles database connection and schema initialization."""
 
-    def __init__(self, db_path: str, env_path: str=".env", echo: bool=True):
+    def __init__(self, env_path: str=".env", echo: bool=True):
         """
         Initializes the DatabaseManager.
-        :param db_path: The file path to the SQLite database.
+        :param env_path: The path to the desired .env file
+        :param echo: whether to log the sql queries...Maybe I should create a separate Python logger for the entire thing.
         """
         load_dotenv(dotenv_path=env_path)
         connection_url = URL.create(
@@ -37,7 +38,7 @@ class DatabaseManager:
             
         self.engine = create_engine(
             url=connection_url,
-            echo=True,
+            echo=echo,
             pool_size=10,
             max_overflow=20,
             pool_pre_ping=True,
