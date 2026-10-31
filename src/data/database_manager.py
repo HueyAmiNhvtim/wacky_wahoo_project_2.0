@@ -31,6 +31,7 @@ class DatabaseManager:
             username=f"{os.getenv('DB_USERNAME')}",
             password=f"{os.getenv('DB_PW')}",
             host=f"{os.getenv('DB_HOST')}",
+            port=int(f"{os.getenv('DB_PORT'), 5432}"), # 5432 is the default postgres, hence the selection. Other than that, it's just a number for a port.
             database=f"{os.getenv('DB_NAME')}"
         )
             
