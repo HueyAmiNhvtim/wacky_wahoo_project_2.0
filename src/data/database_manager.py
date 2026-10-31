@@ -20,18 +20,18 @@ from dotenv import load_dotenv
 class DatabaseManager:
     """Handles database connection and schema initialization."""
 
-    def __init__(self, db_path: str, echo: bool=True):
+    def __init__(self, db_path: str, env_path: str=".env", echo: bool=True):
         """
         Initializes the DatabaseManager.
         :param db_path: The file path to the SQLite database.
         """
-        load_dotenv(dotenv_path=".env")
+        load_dotenv(dotenv_path=env_path)
         connection_url = URL.create(
             drivername="postgresql+psycopg",
             username=f"{os.getenv('DB_USERNAME')}",
             password=f"{os.getenv('DB_PW')}",
             host=f"{os.getenv('DB_HOST')}",
-            port=int(f"{os.getenv('DB_PORT'), 5432}"), # 5432 is the default postgres, hence the selection. Other than that, it's just a number for a port.
+            port=int(f"{os.getenv('DB_PORT', 5432)}"), # 5432 is the default postgres, hence the selection. Other than that, it's just a number for a port.
             database=f"{os.getenv('DB_NAME')}"
         )
             
